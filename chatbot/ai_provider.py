@@ -1,34 +1,33 @@
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
-from chatbot.prompts import SYSTEM_PROMPT
+from transformers import pipeline
 
-# Load env variables
-load_dotenv()
-
-# Create OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# ✅ Stable working model (compatible with your system)
+generator = pipeline("text-generation", model="gpt2")
 
 
-def get_ai_response(message, history):
+def get_ai_response(context, question):
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        prompt = f"""
+Context:
+{context}
 
-        # Add past conversation (memory)
-        for msg in history:
-            messages.append(msg)
+Question:
+{question}
 
-        # Add current message
-        messages.append({"role": "user", "content": message})
+Answer:
+"""
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages
+        response = generator(
+            prompt,
+            max_length=200,
+            temperature=0.7,
+            do_sample=True
         )
 
-        return response.choices[0].message.content
+        # ✅ Clean output
+        answer = response[0]["generated_text"]
+        answer = answer.replace(prompt, "").strip()
+
+        return answer
 
     except Exception as e:
         return f"Error: {str(e)}"
