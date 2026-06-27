@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from chat_memory import ChatMemory
-from chatbot_engine import ChatbotEngine
+from chatbot.chat_memory import ChatMemory
+from chatbot.chatbot_engine import ChatbotEngine
 
 app = Flask(__name__)
 CORS(app)
