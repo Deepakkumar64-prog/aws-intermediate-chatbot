@@ -5,7 +5,7 @@ import time
 from chatbot.rag_engine import process_pdf, get_relevant_chunks
 from chatbot.chatbot_engine import ChatbotEngine
 
-# ✅ Initialize engine (no Flask needed)
+# ✅ Initialize engine
 engine = ChatbotEngine()
 
 st.set_page_config(
@@ -18,25 +18,36 @@ st.set_page_config(
 st.title("🤖 AWS AI Assistant")
 st.caption("Ask me anything about AWS, DevOps, Linux, and Python 🚀")
 
-# ✅ Multi-PDF uploader
+# ✅ Initialize uploader key (IMPORTANT for reset)
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
+
+# ✅ Multi-PDF uploader (WITH KEY FIX ✅)
 uploaded_files = st.file_uploader(
     "📄 Upload multiple PDFs",
     type="pdf",
-    accept_multiple_files=True
+    accept_multiple_files=True,
+    key=st.session_state.uploader_key
 )
 
-# ✅ Reset button (VERY IMPORTANT for deployment)
+# ✅ Reset button (FIXED ✅)
 if st.button("🔄 Reset Documents"):
+    # Clear all session data
     st.session_state.clear()
 
-# ✅ Process multiple PDFs
+    # Recreate uploader key → forces UI refresh
+    st.session_state["uploader_key"] = st.session_state.get("uploader_key", 0) + 1
+
+    # Force rerun
+    st.experimental_rerun()
+
+# ✅ Process PDFs
 if uploaded_files:
     if "index" not in st.session_state:
         with st.spinner("Processing PDFs..."):
 
             all_chunks = []
 
-            # ✅ Process each PDF
             for file in uploaded_files:
                 idx, chunks = process_pdf(file)
 
@@ -67,15 +78,15 @@ if uploaded_files:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ✅ Display history
+# ✅ Display chat
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✅ Input box
+# ✅ Input
 prompt = st.chat_input("Ask about EC2, S3, Lambda, DevOps, etc...")
 
-# ✅ Chat logic (NO BACKEND)
+# ✅ Chat logic
 if prompt:
     st.session_state.messages.append(
         {"role": "user", "content": prompt}
@@ -93,14 +104,14 @@ if prompt:
             st.session_state.chunks
         )
 
-    # ✅ CALL AI DIRECTLY (IMPORTANT CHANGE)
+    # ✅ Generate response
     answer = engine.generate_response(
         prompt,
         history=[],
         context=context
     )
 
-    # ✅ Display response
+    # ✅ Show response
     with st.chat_message("assistant"):
         with st.spinner("Thinking... 🤔"):
             time.sleep(1)
