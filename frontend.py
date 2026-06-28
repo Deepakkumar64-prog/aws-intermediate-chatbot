@@ -18,28 +18,29 @@ st.set_page_config(
 st.title("🤖 AWS AI Assistant")
 st.caption("Ask me anything about AWS, DevOps, Linux, and Python 🚀")
 
-# ✅ Initialize uploader key (IMPORTANT for reset)
+# ✅ Initialize uploader key
 if "uploader_key" not in st.session_state:
-    st.session_state.uploader_key = 0
+    st.session_state["uploader_key"] = 0
 
-# ✅ Multi-PDF uploader (WITH KEY FIX ✅)
+# ✅ Reset button (FULLY FIXED ✅)
+if st.button("🔄 Reset Documents"):
+    # Clear session safely
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+    # Recreate uploader key
+    st.session_state["uploader_key"] = 0
+
+    # ✅ Correct rerun (NEW API)
+    st.rerun()
+
+# ✅ Multi-PDF uploader (with key)
 uploaded_files = st.file_uploader(
     "📄 Upload multiple PDFs",
     type="pdf",
     accept_multiple_files=True,
-    key=st.session_state.uploader_key
+    key=st.session_state["uploader_key"]
 )
-
-# ✅ Reset button (FIXED ✅)
-if st.button("🔄 Reset Documents"):
-    # Clear all session data
-    st.session_state.clear()
-
-    # Recreate uploader key → forces UI refresh
-    st.session_state["uploader_key"] = st.session_state.get("uploader_key", 0) + 1
-
-    # Force rerun
-    st.experimental_rerun()
 
 # ✅ Process PDFs
 if uploaded_files:
@@ -69,17 +70,17 @@ if uploaded_files:
             index = faiss.IndexFlatL2(dim)
             index.add(embeddings)
 
-            st.session_state.index = index
-            st.session_state.chunks = all_chunks
+            st.session_state["index"] = index
+            st.session_state["chunks"] = all_chunks
 
         st.success("✅ All PDFs processed successfully!")
 
 # ✅ Chat history
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state["messages"] = []
 
 # ✅ Display chat
-for message in st.session_state.messages:
+for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
@@ -88,7 +89,7 @@ prompt = st.chat_input("Ask about EC2, S3, Lambda, DevOps, etc...")
 
 # ✅ Chat logic
 if prompt:
-    st.session_state.messages.append(
+    st.session_state["messages"].append(
         {"role": "user", "content": prompt}
     )
 
@@ -100,8 +101,8 @@ if prompt:
     if "index" in st.session_state:
         context = get_relevant_chunks(
             prompt,
-            st.session_state.index,
-            st.session_state.chunks
+            st.session_state["index"],
+            st.session_state["chunks"]
         )
 
     # ✅ Generate response
@@ -117,7 +118,7 @@ if prompt:
             time.sleep(1)
             st.markdown(answer)
 
-    st.session_state.messages.append(
+    st.session_state["messages"].append(
         {
             "role": "assistant",
             "content": answer
