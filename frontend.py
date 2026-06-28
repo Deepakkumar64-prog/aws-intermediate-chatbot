@@ -22,19 +22,20 @@ st.caption("Ask me anything about AWS, DevOps, Linux, and Python 🚀")
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# ✅ Reset button (FULLY FIXED ✅)
+# ✅ ✅ RESET BUTTON (FINAL FIX)
 if st.button("🔄 Reset Documents"):
-    # Clear session safely
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+    # ✅ Force new uploader instance
+    st.session_state["uploader_key"] += 1
 
-    # Recreate uploader key
-    st.session_state["uploader_key"] = 0
+    # ✅ Clear only required data (NOT full clear)
+    for key in ["index", "chunks", "messages"]:
+        if key in st.session_state:
+            del st.session_state[key]
 
-    # ✅ Correct rerun (NEW API)
+    # ✅ Rerun app (correct method)
     st.rerun()
 
-# ✅ Multi-PDF uploader (with key)
+# ✅ File uploader (key-based)
 uploaded_files = st.file_uploader(
     "📄 Upload multiple PDFs",
     type="pdf",
@@ -84,7 +85,7 @@ for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✅ Input
+# ✅ Input box
 prompt = st.chat_input("Ask about EC2, S3, Lambda, DevOps, etc...")
 
 # ✅ Chat logic
