@@ -1,14 +1,21 @@
-# AWS Intermediate Chatbot
+# 🤖 Deepak AI Assistant
 
-This is an intermediate-level chatbot project built using Python, AWS services, and AI APIs.
+## 🚀 Live App
+https://aws-ai-assistant.streamlit.app
 
 ## Features
-- Chat memory
-- AWS integration (future)
-- Flask-based API
-- Ready for deployment
+- Multi-PDF Upload
+- Retrieval-Augmented Generation (RAG)
+- Vector Search using FAISS
+- AI-based responses
+- Reset functionality
 
-## Run locally
-```bash
-pip install -r requirements.txt
-python app.py
+## Tech Stack
+- Python
+- Streamlit
+- FAISS
+- Sentence Transformers
+- Transformers
+
+## Description
+Deepak AI Assistant is a multi-document chatbot that allows users to upload PDFs and ask questions. It processes documents using embeddings and retrieves relevant context for answering queries.

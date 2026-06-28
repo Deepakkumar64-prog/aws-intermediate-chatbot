@@ -8,34 +8,43 @@ from chatbot.chatbot_engine import ChatbotEngine
 # ✅ Initialize engine
 engine = ChatbotEngine()
 
+# ✅ Page config (BROWSER TAB NAME)
 st.set_page_config(
-    page_title="AWS AI Assistant",
+    page_title="Deepak AI Assistant",
     page_icon="🤖",
     layout="wide"
 )
 
-# ✅ Title
-st.title("🤖 AWS AI Assistant")
-st.caption("Ask me anything about AWS, DevOps, Linux, and Python 🚀")
+# ✅ Header (MAIN TITLE)
+st.title("🤖 Deepak AI Assistant")
+
+# ✅ Description
+st.caption("Hey! I'm Deepak’s AI Assistant 🤖 — Ask me anything about AWS, DevOps, and AI 🚀")
+
+# ✅ Sidebar branding (PRO LOOK 🔥)
+st.sidebar.title("👨‍💻 About")
+st.sidebar.write("Deepak AI Assistant")
+st.sidebar.write("Built using RAG + FAISS + Transformers")
+st.sidebar.write("🚀 Deployed on Streamlit Cloud")
 
 # ✅ Initialize uploader key
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# ✅ ✅ RESET BUTTON (FINAL FIX)
+# ✅ RESET BUTTON (FINAL FIX)
 if st.button("🔄 Reset Documents"):
-    # ✅ Force new uploader instance
+    # ✅ Create new uploader key → clears file uploader
     st.session_state["uploader_key"] += 1
 
-    # ✅ Clear only required data (NOT full clear)
+    # ✅ Clear only required data
     for key in ["index", "chunks", "messages"]:
         if key in st.session_state:
             del st.session_state[key]
 
-    # ✅ Rerun app (correct method)
+    # ✅ Refresh UI
     st.rerun()
 
-# ✅ File uploader (key-based)
+# ✅ File uploader
 uploaded_files = st.file_uploader(
     "📄 Upload multiple PDFs",
     type="pdf",
@@ -76,17 +85,17 @@ if uploaded_files:
 
         st.success("✅ All PDFs processed successfully!")
 
-# ✅ Chat history
+# ✅ Chat history init
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# ✅ Display chat
+# ✅ Display chat messages
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✅ Input box
-prompt = st.chat_input("Ask about EC2, S3, Lambda, DevOps, etc...")
+# ✅ Chat input
+prompt = st.chat_input("Ask anything about AWS, DevOps, AI...")
 
 # ✅ Chat logic
 if prompt:
@@ -97,7 +106,7 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # ✅ Get context
+    # ✅ Get context from RAG
     context = ""
     if "index" in st.session_state:
         context = get_relevant_chunks(
@@ -106,14 +115,13 @@ if prompt:
             st.session_state["chunks"]
         )
 
-    # ✅ Generate response
+    # ✅ AI response
     answer = engine.generate_response(
         prompt,
         history=[],
         context=context
     )
 
-    # ✅ Show response
     with st.chat_message("assistant"):
         with st.spinner("Thinking... 🤔"):
             time.sleep(1)
