@@ -1,11 +1,12 @@
 import streamlit as st
-import requests
 import time
 
 # ✅ RAG imports
 from chatbot.rag_engine import process_pdf, get_relevant_chunks
+from chatbot.chatbot_engine import ChatbotEngine
 
-BACKEND_URL = "http://127.0.0.1:5000/chat"
+# ✅ Initialize engine (no Flask needed)
+engine = ChatbotEngine()
 
 st.set_page_config(
     page_title="AWS AI Assistant",
@@ -17,23 +18,56 @@ st.set_page_config(
 st.title("🤖 AWS AI Assistant")
 st.caption("Ask me anything about AWS, DevOps, Linux, and Python 🚀")
 
-# ✅ PDF uploader
-uploaded_file = st.file_uploader("📄 Upload a PDF", type="pdf")
+# ✅ Multi-PDF uploader
+uploaded_files = st.file_uploader(
+    "📄 Upload multiple PDFs",
+    type="pdf",
+    accept_multiple_files=True
+)
 
-# ✅ Process PDF only once
-if uploaded_file:
+# ✅ Reset button (VERY IMPORTANT for deployment)
+if st.button("🔄 Reset Documents"):
+    st.session_state.clear()
+
+# ✅ Process multiple PDFs
+if uploaded_files:
     if "index" not in st.session_state:
-        with st.spinner("Processing PDF..."):
-            index, chunks = process_pdf(uploaded_file)
+        with st.spinner("Processing PDFs..."):
+
+            all_chunks = []
+
+            # ✅ Process each PDF
+            for file in uploaded_files:
+                idx, chunks = process_pdf(file)
+
+                if chunks:
+                    for chunk in chunks:
+                        all_chunks.append(f"[{file.name}] {chunk}")
+
+            # ✅ Create embeddings
+            from sentence_transformers import SentenceTransformer
+            import numpy as np
+            import faiss
+
+            model = SentenceTransformer("all-MiniLM-L6-v2")
+
+            embeddings = model.encode(all_chunks)
+            embeddings = np.array(embeddings).astype("float32")
+
+            dim = embeddings.shape[1]
+            index = faiss.IndexFlatL2(dim)
+            index.add(embeddings)
+
             st.session_state.index = index
-            st.session_state.chunks = chunks
-        st.success("✅ PDF processed successfully!")
+            st.session_state.chunks = all_chunks
+
+        st.success("✅ All PDFs processed successfully!")
 
 # ✅ Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ✅ Display chat history
+# ✅ Display history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -41,9 +75,8 @@ for message in st.session_state.messages:
 # ✅ Input box
 prompt = st.chat_input("Ask about EC2, S3, Lambda, DevOps, etc...")
 
-# ✅ RAG + AI chat logic
+# ✅ Chat logic (NO BACKEND)
 if prompt:
-    # ✅ Show user message
     st.session_state.messages.append(
         {"role": "user", "content": prompt}
     )
@@ -51,9 +84,8 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # ✅ Get RAG context
+    # ✅ Get context
     context = ""
-
     if "index" in st.session_state:
         context = get_relevant_chunks(
             prompt,
@@ -61,25 +93,19 @@ if prompt:
             st.session_state.chunks
         )
 
-    # ✅ Call backend (IMPORTANT CHANGE)
-    response = requests.post(
-        BACKEND_URL,
-        json={
-            "message": prompt,
-            "context": context,   # ✅ NEW (send context separately)
-            "session_id": "deepak"
-        }
+    # ✅ CALL AI DIRECTLY (IMPORTANT CHANGE)
+    answer = engine.generate_response(
+        prompt,
+        history=[],
+        context=context
     )
 
-    answer = response.json()["response"]
-
-    # ✅ Show AI response
+    # ✅ Display response
     with st.chat_message("assistant"):
         with st.spinner("Thinking... 🤔"):
             time.sleep(1)
             st.markdown(answer)
 
-    # ✅ Save assistant reply
     st.session_state.messages.append(
         {
             "role": "assistant",
