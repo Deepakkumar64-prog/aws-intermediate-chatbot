@@ -1,20 +1,20 @@
 from chatbot.ai_provider import get_ai_response
-from chatbot.rag_engine import get_relevant_chunks
 
 
 class ChatbotEngine:
     def __init__(self):
         pass
 
-    def generate_response(self, message, history, index=None, chunks=None):
+    def generate_response(self, message, history, context=""):
+        """
+        Generate response using RAG context + AI model
+        """
 
-        # ✅ Get RAG context
-        context = ""
+        # ✅ Ensure safe context
+        if context is None:
+            context = ""
 
-        if index is not None and chunks is not None:
-            context = get_relevant_chunks(message, index, chunks)
-
-        # ✅ Call AI with context
+        # ✅ Call AI with context + user question
         response = get_ai_response(context, message)
 
         return response
